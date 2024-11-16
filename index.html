@@ -1,107 +1,86 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Messaging Webpage</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Chat</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f9;
             margin: 0;
             padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
         }
         #chat-container {
-            width: 50%;
-            margin: 20px auto;
-            background-color: #ffffff;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-        #messages {
-            height: 300px;
+            flex: 1;
+            padding: 10px;
             overflow-y: auto;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 10px;
-            margin-bottom: 20px;
-            background-color: #f9f9f9;
-        }
-        .message {
-            margin: 10px 0;
-            padding: 10px;
-            border-radius: 5px;
-        }
-        .user-message {
-            background-color: #d1f7d1;
-            align-self: flex-end;
-        }
-        .bot-message {
-            background-color: #d1e7f7;
+            border: 1px solid #ccc;
         }
         #message-form {
             display: flex;
-            gap: 10px;
+            padding: 10px;
+            border-top: 1px solid #ccc;
         }
         #message-input {
             flex: 1;
             padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+            font-size: 16px;
         }
         #send-button {
-            background-color: #007bff;
-            color: #ffffff;
-            border: none;
             padding: 10px 20px;
-            border-radius: 5px;
+            font-size: 16px;
             cursor: pointer;
         }
-        #send-button:hover {
-            background-color: #0056b3;
+        .message {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .message.user {
+            background-color: #d1e7dd;
+            text-align: right;
+        }
+        .message.other {
+            background-color: #f8d7da;
+            text-align: left;
         }
     </style>
 </head>
 <body>
-    <div id="chat-container">
-        <h2>Messaging Webpage</h2>
-        <div id="messages"></div>
-        <form id="message-form" onsubmit="sendMessage(event)">
-            <input type="text" id="message-input" placeholder="Type your message..." required>
-            <button type="submit" id="send-button">Send</button>
-        </form>
-    </div>
+    <div id="chat-container"></div>
+    <form id="message-form">
+        <input type="text" id="message-input" placeholder="Type a message..." required>
+        <button type="submit" id="send-button">Send</button>
+    </form>
 
+    <script src="https://cdn.socket.io/4.5.1/socket.io.min.js"></script>
     <script>
-        const messagesContainer = document.getElementById('messages');
+        const socket = io(); // Connect to the server
+        const chatContainer = document.getElementById('chat-container');
+        const messageForm = document.getElementById('message-form');
         const messageInput = document.getElementById('message-input');
 
-        function sendMessage(event) {
-            event.preventDefault(); // Prevent form submission
+        // Receive a message
+        socket.on('chat message', ({ username, message }) => {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', username === socket.id ? 'user' : 'other');
+            messageDiv.textContent = `${username === socket.id ? 'You' : username}: ${message}`;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        });
 
-            // Get the user's message
-            const userMessage = messageInput.value;
-
-            // Create a message element for the user
-            const userMessageElement = document.createElement('div');
-            userMessageElement.classList.add('message', 'user-message');
-            userMessageElement.textContent = userMessage;
-            messagesContainer.appendChild(userMessageElement);
-
-            // Simulate a bot response
-            setTimeout(() => {
-                const botMessageElement = document.createElement('div');
-                botMessageElement.classList.add('message', 'bot-message');
-                botMessageElement.textContent = `Bot: You said "${userMessage}"`;
-                messagesContainer.appendChild(botMessageElement);
-
-                // Scroll to the bottom
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            }, 500);
-
-            // Clear the input field
-            messageInput.value = '';
-        }
+        // Send a message
+        messageForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const message = messageInput.value;
+            if (message.trim() !== '') {
+                socket.emit('chat message', message);
+                messageInput.value = '';
+            }
+        });
     </script>
 </body>
 </html>
