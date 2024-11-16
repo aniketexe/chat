@@ -3,82 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Real-Time Chat</title>
+    <title>Terminal Messaging</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            background-color: #1e1e1e;
+            color: #00ff00;
+            font-family: monospace;
             margin: 0;
             padding: 0;
             display: flex;
             flex-direction: column;
             height: 100vh;
         }
-        #chat-container {
+        #terminal {
             flex: 1;
-            padding: 10px;
             overflow-y: auto;
-            border: 1px solid #ccc;
+            padding: 10px;
+            border-bottom: 2px solid #00ff00;
         }
-        #message-form {
+        #terminal span {
+            display: block;
+            margin-bottom: 5px;
+        }
+        #input-container {
             display: flex;
             padding: 10px;
-            border-top: 1px solid #ccc;
+            border-top: 2px solid #00ff00;
         }
-        #message-input {
+        #input {
             flex: 1;
-            padding: 10px;
+            background-color: #1e1e1e;
+            border: none;
+            color: #00ff00;
+            font-family: monospace;
             font-size: 16px;
+            padding: 5px;
+            outline: none;
         }
-        #send-button {
-            padding: 10px 20px;
+        button {
+            background-color: #00ff00;
+            color: #1e1e1e;
+            border: none;
+            padding: 5px 10px;
             font-size: 16px;
             cursor: pointer;
+            outline: none;
         }
-        .message {
-            margin-bottom: 10px;
-            padding: 10px;
-            border-radius: 5px;
-        }
-        .message.user {
-            background-color: #d1e7dd;
-            text-align: right;
-        }
-        .message.other {
-            background-color: #f8d7da;
-            text-align: left;
+        button:hover {
+            background-color: #00cc00;
         }
     </style>
 </head>
 <body>
-    <div id="chat-container"></div>
-    <form id="message-form">
-        <input type="text" id="message-input" placeholder="Type a message..." required>
-        <button type="submit" id="send-button">Send</button>
-    </form>
+    <div id="terminal"></div>
+    <div id="input-container">
+        <input type="text" id="input" placeholder="Type a message...">
+        <button onclick="sendMessage()">Send</button>
+    </div>
 
-    <script src="https://cdn.socket.io/4.5.1/socket.io.min.js"></script>
     <script>
-        const socket = io(); // Connect to the server
-        const chatContainer = document.getElementById('chat-container');
-        const messageForm = document.getElementById('message-form');
-        const messageInput = document.getElementById('message-input');
+        const terminal = document.getElementById('terminal');
+        const input = document.getElementById('input');
 
-        // Receive a message
-        socket.on('chat message', ({ username, message }) => {
-            const messageDiv = document.createElement('div');
-            messageDiv.classList.add('message', username === socket.id ? 'user' : 'other');
-            messageDiv.textContent = `${username === socket.id ? 'You' : username}: ${message}`;
-            chatContainer.appendChild(messageDiv);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        });
+        function sendMessage() {
+            const message = input.value.trim();
+            if (message) {
+                // Display the user's message
+                const userMessage = document.createElement('span');
+                userMessage.textContent = `> ${message}`;
+                terminal.appendChild(userMessage);
 
-        // Send a message
-        messageForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const message = messageInput.value;
-            if (message.trim() !== '') {
-                socket.emit('chat message', message);
-                messageInput.value = '';
+                // Respond with a bot message
+                const botMessage = document.createElement('span');
+                botMessage.textContent = `Bot: You said "${message}"`;
+                terminal.appendChild(botMessage);
+
+                // Scroll to the bottom
+                terminal.scrollTop = terminal.scrollHeight;
+
+                // Clear the input field
+                input.value = '';
+            }
+        }
+
+        // Send message on Enter key press
+        input.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                sendMessage();
             }
         });
     </script>
